@@ -4,8 +4,8 @@ permissions:
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
+    tags:
+      - '*'   # Trigger on any tag push
 
 jobs:
   build:
@@ -24,26 +24,19 @@ jobs:
           name: daily-wallpaper.deb
           path: daily-wallpaper.deb
 
-      - name: Create and push tag
-        run: |
-          git config user.name "${{ github.actor }}"
-          git config user.email "${{ github.actor }}@users.noreply.github.com"
-          git tag v1.0.${{ github.run_number }}
-          git push origin v1.0.${{ github.run_number }}
-
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: Daily Wallpaper v1.0.${{ github.run_number }}
+          tag_name: ${{ github.ref_name }}
+          name: Daily Wallpaper ${{ github.ref_name }}
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v1
         with:
           files: daily-wallpaper.deb
         env:
-          GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
