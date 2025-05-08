@@ -1,4 +1,6 @@
 name: Build and Upload DEB Package
+permissions:
+  contents: write
 
 on:
   push:
