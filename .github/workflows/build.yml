@@ -1,0 +1,23 @@
+name: Build and Upload DEB Package
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build DEB package
+        run: dpkg-deb --build daily-wallpaper
+
+      - name: Upload DEB artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: daily-wallpaper.deb
+          path: daily-wallpaper.deb
