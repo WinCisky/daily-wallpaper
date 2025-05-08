@@ -1,0 +1,8 @@
+Package: daily-wallpaper
+Version: 1.0
+Section: base
+Priority: optional
+Architecture: all
+Depends: python3, python3-requests, gsettings-desktop-schemas
+Maintainer: Simone Simonella <xsimone97@hotmail.it>
+Description: A simple Python script that changes the wallpaper daily.
