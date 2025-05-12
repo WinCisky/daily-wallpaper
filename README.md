@@ -2,7 +2,7 @@
 
 A simple python script that changes the wallpaper daily for GNOME.
 
-## Build
+## Build deb package
 ```bash
-dpkg-deb --build daily-wallpaper
+dpkg-deb --build daily-wallpaper-deb
 ```

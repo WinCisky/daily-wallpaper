@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Build DEB package
-        run: dpkg-deb --build daily-wallpaper
+        run: dpkg-deb --build daily-wallpaper-deb daily-wallpaper.deb
 
       - name: Upload DEB artifact
         uses: actions/upload-artifact@v4
