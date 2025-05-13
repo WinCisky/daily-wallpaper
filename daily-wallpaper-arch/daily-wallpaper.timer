@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Daily Wallpaper Hourly
+Requires=daily-wallpaper.service
+
+[Timer]
+Unit=daily-wallpaper.service
+OnBootSec=1min
+OnUnitActiveSec=1h
+
+[Install]
+WantedBy=timers.target

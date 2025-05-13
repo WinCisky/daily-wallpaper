@@ -1,0 +1,17 @@
+post_install() {
+  echo "Installing daily-wallpaper..."
+  if [ -f /usr/local/bin/daily-wallpaper.py ]; then
+    chmod +x /usr/local/bin/daily-wallpaper.py
+    /usr/local/bin/daily-wallpaper.py
+  else
+    echo "Error: daily-wallpaper.py not found."
+  fi
+  
+  echo "The wallpaper will update hourly via cron."
+  echo "Make sure hyprpaper is configured in your Hyprland config to start automatically."
+  echo "Add this to your hyprland.conf: exec-once = hyprpaper"
+}
+
+post_upgrade() {
+  post_install
+}

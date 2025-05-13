@@ -1,0 +1,45 @@
+# Arch package build artifacts
+*.pkg.tar.zst
+*.pkg.tar.xz
+*.pkg.tar
+pkg/
+src/
+daily-wallpaper-*-*.pkg.*
+
+# Backup files
+*~
+*.bak
+
+# Log files
+*.log
+
+# Temporary files
+*.swp
+*.swo
+.*.swp
+.*.swo
+
+# Build directories and files
+.SRCINFO.lock
+.SRCINFO.gen
+.SRCINFO.out
+.BUILDINFO
+.MTREE
+.PKGINFO
+
+# Cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# VSCode
+.vscode/
+
+# IDE project files
+.idea/
+*.iml
+
+# Editor temporary files
+*~
+\#*\#
+.\#*

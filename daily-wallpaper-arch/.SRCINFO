@@ -1,0 +1,24 @@
+pkgbase = daily-wallpaper
+	pkgdesc = A simple Python script that changes the wallpaper daily for Hyprland
+	pkgver = 1.0
+	pkgrel = 1
+	url = https://github.com/your-username/daily-wallpaper
+	arch = any
+	license = MIT
+	makedepends = git
+	depends = python
+	depends = python-requests
+	depends = hyprpaper
+	depends = systemd
+	depends = sudo
+	source = daily-wallpaper.py
+	source = daily-wallpaper.service
+	source = daily-wallpaper.timer
+	source = update-wallpaper.sh
+	sha256sums = SKIP
+	sha256sums = SKIP
+	sha256sums = SKIP
+	sha256sums = SKIP
+	install = daily-wallpaper.install
+
+pkgname = daily-wallpaper
