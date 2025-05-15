@@ -1,34 +1,66 @@
 # Maintainer: Simone Simonella <xsimone97@hotmail.it>
-
-pkgname=daily-wallpaper
-pkgver=1.0
+pkgname=dynamic-wallpaper-hyprland
+pkgver=1.0.0
 pkgrel=1
-pkgdesc="A simple Python script that changes the wallpaper daily for Hyprland"
+pkgdesc="Downloads an image hourly and sets it as wallpaper for all Hyprland users."
 arch=('any')
-url="https://github.com/your-username/daily-wallpaper"
+url="https://github.com/yourusername/dynamic-wallpaper-hyprland" # Optional: if you host it
 license=('MIT')
-depends=('python' 'python-requests' 'hyprpaper' 'systemd' 'sudo')
-makedepends=('git')
-install="${pkgname}.install"
-source=("daily-wallpaper.py"
-        "daily-wallpaper.service"
-        "daily-wallpaper.timer"
-        "update-wallpaper.sh")
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
+depends=('curl' 'hyprland' 'hyprpaper') # hyprpaper for `hyprctl hyprpaper` functionality
+makedepends=()
+source=("${pkgname}-${pkgver}.tar.gz" # This would be a tarball of your files
+        "dynamic-wallpaper.sh"
+        "dynamic-wallpaper.service"
+        "dynamic-wallpaper.timer")
+# If you are building locally, you can list files directly:
+# source=("dynamic-wallpaper.sh"
+#         "dynamic-wallpaper.service"
+#         "dynamic-wallpaper.timer")
+
+sha256sums=('SKIP' # For the tarball if you create one
+            'SKIP' # For dynamic-wallpaper.sh
+            'SKIP' # For dynamic-wallpaper.service
+            'SKIP') # For dynamic-wallpaper.timer
+# Use 'SKIP' for local development, then run `updpkgsums` to generate correct checksums
 
 package() {
-  # Create directories
-  install -dm755 "${pkgdir}/usr/share/backgrounds"
-  install -dm755 "${pkgdir}/usr/local/bin"
-  
-  # Install the script
-  install -Dm755 "${srcdir}/daily-wallpaper.py" "${pkgdir}/usr/local/bin/daily-wallpaper.py"
-  install -Dm755 "${srcdir}/update-wallpaper.sh" "${pkgdir}/usr/local/bin/update-wallpaper.sh"
-  
-  # Install systemd service and timer
-  install -Dm644 "${srcdir}/daily-wallpaper.service" "${pkgdir}/usr/lib/systemd/system/daily-wallpaper.service"
-  install -Dm644 "${srcdir}/daily-wallpaper.timer" "${pkgdir}/usr/lib/systemd/system/daily-wallpaper.timer"
-  
-  # Create a directory for the wallpaper
-  install -dm755 "${pkgdir}/usr/share/backgrounds"
+    # Install the script
+    install -Dm755 "${srcdir}/dynamic-wallpaper.sh" "${pkgdir}/usr/bin/dynamic-wallpaper.sh"
+
+    # Install systemd service and timer files
+    install -Dm644 "${srcdir}/dynamic-wallpaper.service" "${pkgdir}/usr/lib/systemd/system/dynamic-wallpaper.service"
+    install -Dm644 "${srcdir}/dynamic-wallpaper.timer" "${pkgdir}/usr/lib/systemd/system/dynamic-wallpaper.timer"
+
+    # Create the directory for the wallpaper (systemd service will also do this but good to have)
+    install -d "${pkgdir}/usr/share/dynamic-wallpaper"
+}
+
+post_install() {
+    echo "Enabling and starting the dynamic wallpaper timer..."
+    systemctl enable --now dynamic-wallpaper.timer
+    echo "To manually trigger the wallpaper update, you can run:"
+    echo "  sudo systemctl start dynamic-wallpaper.service"
+    echo "OR"
+    echo "  sudo /usr/bin/dynamic-wallpaper.sh"
+}
+
+post_upgrade() {
+    # If the timer was active, restart it to pick up any changes.
+    # systemctl is-active --quiet dynamic-wallpaper.timer && systemctl restart dynamic-wallpaper.timer
+    # A more robust way:
+    if systemctl --quiet is-enabled dynamic-wallpaper.timer; then
+        echo "Restarting dynamic wallpaper timer..."
+        systemctl try-restart dynamic-wallpaper.timer || true
+    fi
+}
+
+pre_remove() {
+    echo "Stopping and disabling the dynamic wallpaper timer..."
+    systemctl disable --now dynamic-wallpaper.timer || true # Ignore errors if not found
+    systemctl stop dynamic-wallpaper.service || true # Stop any active run
+}
+
+post_remove() {
+    echo "You might want to manually remove the wallpaper directory:"
+    echo "  sudo rm -rf /usr/share/dynamic-wallpaper"
 }

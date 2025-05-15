@@ -1,0 +1,13 @@
+[Unit]
+Description=Dynamic Wallpaper Download and Set
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/dynamic-wallpaper.sh
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
