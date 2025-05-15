@@ -89,7 +89,8 @@ set_wallpaper_for_user() {
   # Check if swww-daemon is already running, if not start it
   cmd+="if ! pgrep -x swww-daemon >/dev/null; then "
   cmd+="echo 'Starting swww-daemon...'; "
-  cmd+="swww-daemon & "
+  # Start daemon in a way that persists after the service exits
+  cmd+="nohup swww-daemon > /dev/null 2>&1 & "
   cmd+="sleep 3; " # Give more time for the daemon to start
   cmd+="else "
   cmd+="echo 'swww-daemon is already running'; "

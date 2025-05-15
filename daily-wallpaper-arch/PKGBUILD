@@ -35,9 +35,10 @@ post_install() {
     # Start swww daemon for the current user
     if ! pgrep -x "swww-daemon" > /dev/null; then
         echo "Starting swww daemon for the current user..."
-        swww init &
+        # Use nohup to ensure the daemon keeps running
+        nohup swww init > /dev/null 2>&1 &
     fi
-    sleep 1 # Give it some time to start
+    sleep 2 # Give it more time to start
     
     # Run the service once to set up the wallpaper immediately
     systemctl start dynamic-wallpaper.service
