@@ -3,7 +3,6 @@ Description=Run Dynamic Wallpaper Script Hourly
 
 [Timer]
 OnCalendar=hourly
-Persistent=true # Run on next boot if a scheduled run was missed
 
 [Install]
 WantedBy=timers.target

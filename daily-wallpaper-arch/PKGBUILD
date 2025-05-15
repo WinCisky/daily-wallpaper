@@ -4,24 +4,17 @@ pkgver=1.0.0
 pkgrel=1
 pkgdesc="Downloads an image hourly and sets it as wallpaper for all Hyprland users."
 arch=('any')
-url="https://github.com/yourusername/dynamic-wallpaper-hyprland" # Optional: if you host it
 license=('MIT')
 depends=('curl' 'hyprland' 'hyprpaper') # hyprpaper for `hyprctl hyprpaper` functionality
 makedepends=()
-source=("${pkgname}-${pkgver}.tar.gz" # This would be a tarball of your files
-        "dynamic-wallpaper.sh"
+# Using local files directly for building
+source=("dynamic-wallpaper.sh"
         "dynamic-wallpaper.service"
         "dynamic-wallpaper.timer")
-# If you are building locally, you can list files directly:
-# source=("dynamic-wallpaper.sh"
-#         "dynamic-wallpaper.service"
-#         "dynamic-wallpaper.timer")
 
-sha256sums=('SKIP' # For the tarball if you create one
-            'SKIP' # For dynamic-wallpaper.sh
-            'SKIP' # For dynamic-wallpaper.service
+sha256sums=('SKIP'  # For dynamic-wallpaper.sh
+            'SKIP'  # For dynamic-wallpaper.service
             'SKIP') # For dynamic-wallpaper.timer
-# Use 'SKIP' for local development, then run `updpkgsums` to generate correct checksums
 
 package() {
     # Install the script
@@ -38,19 +31,30 @@ package() {
 post_install() {
     echo "Enabling and starting the dynamic wallpaper timer..."
     systemctl enable --now dynamic-wallpaper.timer
+    
+    # Run the service once to set up the wallpaper immediately
+    systemctl start dynamic-wallpaper.service
+    
     echo "To manually trigger the wallpaper update, you can run:"
     echo "  sudo systemctl start dynamic-wallpaper.service"
     echo "OR"
     echo "  sudo /usr/bin/dynamic-wallpaper.sh"
+    
+    # Inform the user about hyprpaper
+    echo ""
+    echo "Note: This package requires hyprpaper to be running for each user."
+    echo "The script will attempt to start hyprpaper automatically if needed,"
+    echo "but for the best experience, you should add 'exec-once = hyprpaper'"
+    echo "to your Hyprland config (~/.config/hypr/hyprland.conf)."
 }
 
 post_upgrade() {
     # If the timer was active, restart it to pick up any changes.
-    # systemctl is-active --quiet dynamic-wallpaper.timer && systemctl restart dynamic-wallpaper.timer
-    # A more robust way:
     if systemctl --quiet is-enabled dynamic-wallpaper.timer; then
         echo "Restarting dynamic wallpaper timer..."
         systemctl try-restart dynamic-wallpaper.timer || true
+        # Run the service once to update with any new changes
+        systemctl start dynamic-wallpaper.service
     fi
 }
 
