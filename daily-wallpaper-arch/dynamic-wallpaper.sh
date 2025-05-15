@@ -3,7 +3,12 @@ set -e # Exit immediately if a command exits with a non-zero status.
 
 # --- CONFIGURATION ---
 IMAGE_ENDPOINT="https://wallpapers.opentrust.it"
-WALLPAPER_DIR="/usr/share/dynamic-wallpaper"
+# Check if /share/dynamic-wallpaper exists, otherwise fallback to /usr/share/dynamic-wallpaper
+if [ -d "/share/dynamic-wallpaper" ]; then
+    WALLPAPER_DIR="/share/dynamic-wallpaper"
+else
+    WALLPAPER_DIR="/usr/share/dynamic-wallpaper"
+fi
 WALLPAPER_PATH="$WALLPAPER_DIR/current_wallpaper.jpg"
 TMP_WALLPAPER_PATH="$WALLPAPER_PATH.tmp"
 # --- END CONFIGURATION ---
@@ -38,42 +43,88 @@ else
 fi
 
 
+# Function to set wallpaper for a user
+set_wallpaper_for_user() {
+  local user=$1
+  local home_dir=$(eval echo ~$user)
+  local uid=$(id -u "$user")
+  
+  # Multiple methods to detect a Wayland session
+  echo "Checking for Wayland session for user $user..."
+  
+  # Method 1: Check if Hyprland is running for this user
+  if sudo -u "$user" pgrep -x Hyprland >/dev/null; then
+    echo "Hyprland is running for user $user"
+  # Method 2: Check if there's a wayland socket
+  elif [ -e "/run/user/$uid/wayland-0" ] || [ -e "/run/user/$uid/wayland-1" ]; then
+    echo "Wayland socket found for user $user"
+  # Method 3: Try to detect through process environment
+  elif ps -u "$user" -o cmd | grep -q "WAYLAND_DISPLAY="; then
+    echo "Wayland environment detected in processes for user $user"
+  else
+    echo "No Wayland session found for user $user, skipping..."
+    return 1
+  fi
+  
+  echo "Setting wallpaper for $user using swww..."
+  
+  # Setup proper environment for the user
+  local XDG_RUNTIME_DIR="/run/user/$uid"
+  
+  # Try to set the wallpaper with proper environment
+  local max_attempts=3
+  local attempt=1
+  local success=false
+  
+  # Command to execute as the user with proper environment
+  local cmd="export XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR; "
+  
+  # Try to detect WAYLAND_DISPLAY if not set
+  if [ -e "$XDG_RUNTIME_DIR/wayland-0" ]; then
+    cmd+="export WAYLAND_DISPLAY=wayland-0; "
+  elif [ -e "$XDG_RUNTIME_DIR/wayland-1" ]; then
+    cmd+="export WAYLAND_DISPLAY=wayland-1; "
+  fi
+  
+  # Check if swww-daemon is already running, if not start it
+  cmd+="if ! pgrep -x swww-daemon >/dev/null; then "
+  cmd+="echo 'Starting swww-daemon...'; "
+  cmd+="swww-daemon & "
+  cmd+="sleep 3; " # Give more time for the daemon to start
+  cmd+="else "
+  cmd+="echo 'swww-daemon is already running'; "
+  cmd+="fi; "
+  
+  # Command to set wallpaper
+  cmd+="swww img '$WALLPAPER_PATH' --transition-fps 60 --transition-type grow --transition-pos center"
+  
+  echo "Executing: $cmd"
+  
+  while [ $attempt -le $max_attempts ] && [ "$success" = "false" ]; do
+    echo "Attempt $attempt to set wallpaper for $user..."
+    
+    # Execute the command as the user
+    if sudo -u "$user" bash -c "$cmd" 2>/dev/null; then
+      echo "Successfully set wallpaper for $user's session using swww"
+      success=true
+    else
+      echo "Attempt $attempt failed, waiting before retry..."
+      sleep 2
+      attempt=$((attempt + 1))
+    fi
+  done
+  
+  if [ "$success" = "false" ]; then
+    echo "Failed to set wallpaper for $user after $max_attempts attempts"
+    return 1
+  fi
+  
+  return 0
+}
+
 # Loop through users with active sessions
 for user in $(who | cut -d' ' -f1 | sort | uniq); do
-  # Get user id
-  uid=$(id -u "$user")
-  
-  # Try to get HYPRLAND_INSTANCE_SIGNATURE from user environment
-  hypr_signature=$(sudo -u "$user" bash -c 'echo $HYPRLAND_INSTANCE_SIGNATURE')
-  
-  if [ -n "$hypr_signature" ]; then
-    echo "Found active Hyprland session for user $user"
-    
-    # Use the user's Hyprland session to reload the wallpaper
-    sudo -u "$user" bash -c "HYPRLAND_INSTANCE_SIGNATURE=$hypr_signature hyprctl hyprpaper preload \"$WALLPAPER_PATH\""
-    sudo -u "$user" bash -c "HYPRLAND_INSTANCE_SIGNATURE=$hypr_signature hyprctl hyprpaper wallpaper \",${WALLPAPER_PATH}\""
-    
-    echo "Directly set wallpaper for $user's Hyprland session"
-  fi
-  
-  # Also check if we can find the socket directly in XDG_RUNTIME_DIR
-  if [ -d "/run/user/$uid" ]; then
-    for socket in /run/user/$uid/hypr/*/.hyprpaper.sock; do
-      if [ -S "$socket" ]; then
-        echo "Found hyprpaper socket at $socket for user $user"
-        
-        # Extract the instance path from the socket path
-        instance_dir=$(dirname "$socket")
-        instance_id=$(basename "$instance_dir")
-        
-        # Use the socket to reload the wallpaper
-        sudo -u "$user" bash -c "HYPRLAND_INSTANCE_SIGNATURE=$instance_id hyprctl hyprpaper preload \"$WALLPAPER_PATH\""
-        sudo -u "$user" bash -c "HYPRLAND_INSTANCE_SIGNATURE=$instance_id hyprctl hyprpaper wallpaper \",${WALLPAPER_PATH}\""
-        
-        echo "Used socket to set wallpaper for $user's Hyprland session"
-      fi
-    done
-  fi
+  set_wallpaper_for_user "$user"
 done
 
 exit 0

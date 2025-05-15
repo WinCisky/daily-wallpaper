@@ -5,7 +5,7 @@ pkgrel=1
 pkgdesc="Downloads an image hourly and sets it as wallpaper for all Hyprland users."
 arch=('any')
 license=('MIT')
-depends=('curl' 'hyprland' 'hyprpaper') # hyprpaper for `hyprctl hyprpaper` functionality
+depends=('curl' 'hyprland' 'swww') # swww for wallpaper setting functionality
 makedepends=()
 # Using local files directly for building
 source=("dynamic-wallpaper.sh"
@@ -31,6 +31,13 @@ package() {
 post_install() {
     echo "Enabling and starting the dynamic wallpaper timer..."
     systemctl enable --now dynamic-wallpaper.timer
+
+    # Start swww daemon for the current user
+    if ! pgrep -x "swww-daemon" > /dev/null; then
+        echo "Starting swww daemon for the current user..."
+        swww init &
+    fi
+    sleep 1 # Give it some time to start
     
     # Run the service once to set up the wallpaper immediately
     systemctl start dynamic-wallpaper.service
@@ -40,11 +47,11 @@ post_install() {
     echo "OR"
     echo "  sudo /usr/bin/dynamic-wallpaper.sh"
     
-    # Inform the user about hyprpaper
+    # Inform the user about swww
     echo ""
-    echo "Note: This package requires hyprpaper to be running for each user."
-    echo "The script will attempt to start hyprpaper automatically if needed,"
-    echo "but for the best experience, you should add 'exec-once = hyprpaper'"
+    echo "Note: This package requires swww to be running for each user."
+    echo "The script will attempt to start swww daemon automatically if needed,"
+    echo "but for the best experience, you should add 'exec-once = swww init'"
     echo "to your Hyprland config (~/.config/hypr/hyprland.conf)."
 }
 
