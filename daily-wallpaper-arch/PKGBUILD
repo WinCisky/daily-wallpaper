@@ -7,6 +7,7 @@ arch=('any')
 license=('MIT')
 depends=('curl' 'hyprland' 'swww') # swww for wallpaper setting functionality
 makedepends=()
+install=setup.install
 # Using local files directly for building
 source=("dynamic-wallpaper.sh"
         "dynamic-wallpaper.service"
@@ -26,53 +27,4 @@ package() {
 
     # Create the directory for the wallpaper (systemd service will also do this but good to have)
     install -d "${pkgdir}/usr/share/dynamic-wallpaper"
-}
-
-post_install() {
-    echo "Enabling and starting the dynamic wallpaper timer..."
-    systemctl enable --now dynamic-wallpaper.timer
-
-    # Start swww daemon for the current user
-    if ! pgrep -x "swww-daemon" > /dev/null; then
-        echo "Starting swww daemon for the current user..."
-        # Use nohup to ensure the daemon keeps running
-        nohup swww init > /dev/null 2>&1 &
-    fi
-    sleep 2 # Give it more time to start
-    
-    # Run the service once to set up the wallpaper immediately
-    systemctl start dynamic-wallpaper.service
-    
-    echo "To manually trigger the wallpaper update, you can run:"
-    echo "  sudo systemctl start dynamic-wallpaper.service"
-    echo "OR"
-    echo "  sudo /usr/bin/dynamic-wallpaper.sh"
-    
-    # Inform the user about swww
-    echo ""
-    echo "Note: This package requires swww to be running for each user."
-    echo "The script will attempt to start swww daemon automatically if needed,"
-    echo "but for the best experience, you should add 'exec-once = swww init'"
-    echo "to your Hyprland config (~/.config/hypr/hyprland.conf)."
-}
-
-post_upgrade() {
-    # If the timer was active, restart it to pick up any changes.
-    if systemctl --quiet is-enabled dynamic-wallpaper.timer; then
-        echo "Restarting dynamic wallpaper timer..."
-        systemctl try-restart dynamic-wallpaper.timer || true
-        # Run the service once to update with any new changes
-        systemctl start dynamic-wallpaper.service
-    fi
-}
-
-pre_remove() {
-    echo "Stopping and disabling the dynamic wallpaper timer..."
-    systemctl disable --now dynamic-wallpaper.timer || true # Ignore errors if not found
-    systemctl stop dynamic-wallpaper.service || true # Stop any active run
-}
-
-post_remove() {
-    echo "You might want to manually remove the wallpaper directory:"
-    echo "  sudo rm -rf /usr/share/dynamic-wallpaper"
 }
