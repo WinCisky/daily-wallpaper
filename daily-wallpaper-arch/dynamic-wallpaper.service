@@ -5,9 +5,9 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/dynamic-wallpaper.sh
+ExecStart=/usr/bin/python /usr/bin/dynamic-wallpaper.py
 # Adding RemainAfterExit so that any processes started remain running
-RemainAfterExit=yes
+# RemainAfterExit=yes
 User=root
 Group=root
 

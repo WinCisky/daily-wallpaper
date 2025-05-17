@@ -1,5 +1,9 @@
 post_install() {
     systemctl enable --now dynamic-wallpaper.timer
+
+    echo "YOU NEED TO ADD THE FOLLOWING COMMAND TO YOUR HYPRLAND CONFIG"
+    ehco "exec-once = swww init"
+    echo "OTHERWISE THE WALLPAPER WILL REVERT TO THE DEFAULT ONE"
 }
 
 post_upgrade() {

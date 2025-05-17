@@ -5,21 +5,21 @@ pkgrel=1
 pkgdesc="Downloads an image hourly and sets it as wallpaper for all Hyprland users."
 arch=('any')
 license=('MIT')
-depends=('curl' 'hyprland' 'swww') # swww for wallpaper setting functionality
+depends=('python' 'python-requests' 'hyprland' 'swww') # Python dependencies and wallpaper setting functionality
 makedepends=()
 install=setup.install
 # Using local files directly for building
-source=("dynamic-wallpaper.sh"
+source=("dynamic-wallpaper.py"
         "dynamic-wallpaper.service"
         "dynamic-wallpaper.timer")
 
-sha256sums=('SKIP'  # For dynamic-wallpaper.sh
+sha256sums=('SKIP'  # For dynamic-wallpaper.py
             'SKIP'  # For dynamic-wallpaper.service
             'SKIP') # For dynamic-wallpaper.timer
 
 package() {
     # Install the script
-    install -Dm755 "${srcdir}/dynamic-wallpaper.sh" "${pkgdir}/usr/bin/dynamic-wallpaper.sh"
+    install -Dm755 "${srcdir}/dynamic-wallpaper.py" "${pkgdir}/usr/bin/dynamic-wallpaper.py"
 
     # Install systemd service and timer files
     install -Dm644 "${srcdir}/dynamic-wallpaper.service" "${pkgdir}/usr/lib/systemd/system/dynamic-wallpaper.service"

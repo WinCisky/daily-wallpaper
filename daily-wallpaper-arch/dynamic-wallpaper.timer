@@ -2,7 +2,8 @@
 Description=Run Dynamic Wallpaper Script Hourly
 
 [Timer]
-OnUnitActiveSec=1min
+OnBootSec=1min
+OnCalendar=*-*-* *:22:00
 
 [Install]
 WantedBy=timers.target
